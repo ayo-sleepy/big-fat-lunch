@@ -12,7 +12,13 @@
   "scripts": {
     "watch:nodemon": "npx nodemon --no-stdin -e js,jsx,mjs,cjs,json --exec 'npx tsx' ./main.js",
     "watch:tsx": "tsx watch ./main.js",
-    "build": "bun build ./main.js --compile --outfile ./dist/big-fat-lunch"
+    "build": "bun build ./main.js --compile --outfile ./dist/big-fat-lunch",
+    "build:linux": "bun build ./main.js --compile --target=bun-linux-x64 --outfile ./dist/big-fat-lunch-linux-x64",
+    "build:linux:musl": "bun build ./main.js --compile --target=bun-linux-x64-musl --outfile ./dist/big-fat-lunch-linux-x64-musl",
+    "build:mac:x64": "bun build ./main.js --compile --target=bun-darwin-x64 --outfile ./dist/big-fat-lunch-macos-x64",
+    "build:mac:arm64": "bun build ./main.js --compile --target=bun-darwin-arm64 --outfile ./dist/big-fat-lunch-macos-arm64",
+    "build:win": "bun build ./main.js --compile --target=bun-windows-x64 --outfile ./dist/big-fat-lunch-windows-x64.exe",
+    "build:all": "npm run build:linux && npm run build:linux:musl && npm run build:mac:x64 && npm run build:mac:arm64 && npm run build:win"
   },
   "type": "module",
   "devDependencies": {
