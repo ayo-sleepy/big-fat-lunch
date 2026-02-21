@@ -11,10 +11,6 @@ permissions:
 
 jobs:
   build:
-    tag:
-      description: "Existing tag to attach assets to (e.g. v0.1.0)"
-      required: true
-      type: string
     strategy:
       fail-fast: false
       matrix:
@@ -67,26 +63,16 @@ jobs:
           name: ${{ matrix.out }}
           path: dist/${{ matrix.out }}
 
-    release:
-      needs: build
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/download-artifact@v4
-          with:
-            path: dist
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
 
-        - run: ls -R dist
+      - run: ls -R dist
 
-        - name: Resolve tag
-          id: tag
-          run: |
-            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              echo "TAG=${{ inputs.tag }}" >> $GITHUB_OUTPUT
-            else
-              echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-            fi
-
-        - uses: softprops/action-gh-release@v2
-          with:
-            tag_name: ${{ steps.tag.outputs.TAG }}
-            files: dist/**/*
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
