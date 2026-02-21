@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "ink": "^6.8.0",
+    "ink-text-input": "^6.0.0",
+    "lokijs": "^1.5.12",
+    "node": "^25.6.1",
+    "nodemon": "^3.1.13",
+    "react": "^19.2.4",
+    "react-devtools-core": "^7.0.1"
+  },
+  "scripts": {
+    "watch:nodemon": "npx nodemon --no-stdin -e js,jsx,mjs,cjs,json --exec 'npx tsx' ./main.js",
+    "watch:tsx": "tsx watch ./main.js",
+    "build": "bun build ./main.js --compile --outfile ./dist/big-fat-lunch"
+  },
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "pkg": "^5.8.1",
+    "tsx": "^4.21.0"
+  }
+}
