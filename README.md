@@ -6,7 +6,7 @@
 
 #### License: MIT
 
-#### Stack: NodeJS, JavaScript, LokyJs, Chalk, Ink, Tsx, Nodemon, React.
+#### Stack: NodeJS, JavaScript, LokiJs, Chalk, Ink, Tsx, Nodemon, React.
 
 <img src="./assets/big-fat-lunch.png">
 
