@@ -1,0 +1,68 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            script: build:linux
+            artifact: big-fat-lunch-linux-x64
+          - os: ubuntu-latest
+            script: build:linux:musl
+            artifact: big-fat-lunch-linux-x64-musl
+          - os: macos-latest
+            script: build:mac:arm64
+            artifact: big-fat-lunch-macos-arm64
+          - os: macos-13
+            script: build:mac:x64
+            artifact: big-fat-lunch-macos-x64
+          - os: windows-latest
+            script: build:win
+            artifact: big-fat-lunch-windows-x64.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - run: bun install --frozen-lockfile
+        shell: bash
+
+      - run: bun run ${{ matrix.script }}
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: List files
+        run: ls -R dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
