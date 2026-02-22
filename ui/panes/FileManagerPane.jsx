@@ -69,7 +69,7 @@ export default function FileManagerPane({
         setCursor(0);
       }
 
-      if (input === "/") {
+      if (input === "X:/") {
         onCwdChange("root");
         setCursor(0);
       }

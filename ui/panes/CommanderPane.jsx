@@ -128,7 +128,7 @@ export default function CommanderPane({
     }
 
     if (cmd === "cd") {
-      const target = args[0] ?? "/";
+      const target = args[0] ?? "X:/";
       const id = resolveToEntryId(cwdId, target);
       onCwdChange(id);
       onSelectEntry(null);

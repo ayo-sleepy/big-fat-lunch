@@ -8,8 +8,8 @@ function now() {
 
 function splitPath(rawPath) {
   const raw = String(rawPath ?? "").trim();
-  const isAbs = raw.startsWith("/");
-  const parts = raw.split("/").filter(Boolean);
+  const isAbs = raw.startsWith("X:/");
+  const parts = raw.split("X:/").filter(Boolean);
   return { isAbs, parts };
 }
 
@@ -57,9 +57,9 @@ function findChild(entries, parentId, name) {
   return entries.findOne({ parentId, name, deleted: false });
 }
 
-function resolveIdFrom(cwdId, path) {
+export function resolveToEntryId(cwdId, path) {
   const { entries } = getDb();
-  if (path === "/" || path === "") return "root";
+  if (path === "X:/" || path === "") return "root";
 
   const { isAbs, parts } = splitPath(path);
   const normalized = normalizeParts(parts);
@@ -107,7 +107,7 @@ function resolveParentAndName(cwdId, path) {
 
 function getPathOfEntry(entries, entryId) {
   const entry = getEntryOrThrow(entries, entryId);
-  if (entry.id === "root") return "/";
+  if (entry.id === "root") return "X:/";
 
   const names = [];
   let cur = entry;
@@ -116,11 +116,7 @@ function getPathOfEntry(entries, entryId) {
     cur = getEntryOrThrow(entries, cur.parentId);
   }
   names.reverse();
-  return `/${names.join("/")}`;
-}
-
-export function resolveToEntryId(cwdId, path) {
-  return resolveIdFrom(cwdId, path);
+  return `X:/${names.join("/")}`;
 }
 
 export function getPathOfEntryId(entryId) {
@@ -280,7 +276,7 @@ function removeRecursive(entryId) {
 
 export function rmPath(cwdId, path, { recursive } = {}) {
   const { entries } = getDb();
-  const targetId = resolveIdFrom(cwdId, path);
+  const targetId = resolveToEntryId(cwdId, path);
   if (targetId === "root") throw new Error("rm: cannot remove root");
 
   const target = getEntryOrThrow(entries, targetId);
@@ -307,7 +303,7 @@ export function rmPath(cwdId, path, { recursive } = {}) {
 
 function resolveMoveDestination(cwdId, dstPath) {
   const { entries } = getDb();
-  const dstId = resolveIdFrom(cwdId, dstPath);
+  const dstId = resolveToEntryId(cwdId, dstPath);
   const dstEntry = getEntryOrThrow(entries, dstId);
 
   if (isDir(dstEntry)) return { parentId: dstEntry.id, name: null };
@@ -344,7 +340,7 @@ function moveEntry(entryId, newParentId, newName) {
 
 export function mvPath(cwdId, srcPath, dstPath) {
   const { entries } = getDb();
-  const srcId = resolveIdFrom(cwdId, srcPath);
+  const srcId = resolveToEntryId(cwdId, srcPath);
   if (srcId === "root") throw new Error("mv: cannot move root");
 
   const src = getEntryOrThrow(entries, srcId);
@@ -412,7 +408,7 @@ function copyTreeRecursive(srcId, dstParentId, dstName) {
 
 function resolveCopyDestination(cwdId, dstPath) {
   const { entries } = getDb();
-  const dstId = resolveIdFrom(cwdId, dstPath);
+  const dstId = resolveToEntryId(cwdId, dstPath);
   const dstEntry = getEntryOrThrow(entries, dstId);
 
   if (isDir(dstEntry)) return { parentId: dstEntry.id, name: null };
@@ -424,7 +420,7 @@ function resolveCopyDestination(cwdId, dstPath) {
 
 export function cpPath(cwdId, srcPath, dstPath, { recursive } = {}) {
   const { entries } = getDb();
-  const srcId = resolveIdFrom(cwdId, srcPath);
+  const srcId = resolveToEntryId(cwdId, srcPath);
   const src = getEntryOrThrow(entries, srcId);
 
   if (isDir(src) && !recursive)
