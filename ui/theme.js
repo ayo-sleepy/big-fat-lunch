@@ -11,10 +11,10 @@ export const theme = {
     paddingInside: 1,
   },
   frame: {
-    borderChar: "=",
-    borderCharCorner: "=",
-    activeColor: "cyan",
-    inactiveColor: "gray",
+    borderChar: "█",
+    borderCharCorner: "█",
+    activeColor: "yellow",
+    inactiveColor: "#111111",
     titleColor: "white",
   },
   commander: {
