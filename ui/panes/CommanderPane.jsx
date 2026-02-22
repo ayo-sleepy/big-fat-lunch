@@ -13,7 +13,7 @@ import {
   cpPath,
 } from "../../workspace/fsOps.js";
 import { getDb } from "../../data/data.js";
-import { writeEntryData, readEntryData } from "../../data/fatOps.js";
+import { writeEntryData, readEntryData } from "../../workspace/fatOps.js";
 
 function tokenize(line) {
   return line.trim().split(/\s+/).filter(Boolean);

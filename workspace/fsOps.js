@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { getDb, logEvent } from "../data/data.js";
-import { allocateChain, freeChain, cloneChainData } from "../data/fatOps.js";
+import { allocateChain, freeChain, cloneChainData } from "./fatOps.js";
 
 function now() {
   return Date.now();

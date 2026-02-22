@@ -1,4 +1,4 @@
-import { getDb, logEvent } from "./data.js";
+import { getDb, logEvent } from "../data/data.js";
 
 function isFree(v) {
   return v === 0;
