@@ -16,9 +16,7 @@ export default function CommanderPane({
   onSelectEntry,
 }) {
   const [value, setValue] = useState("");
-  const [output, setOutput] = useState([
-    'type "help" | focus: Space+1/2/3 | arrows in file manager & clusters',
-  ]);
+  const [output, setOutput] = useState(['type "help" | focus: alt+1/2/3']);
 
   const cwdPath = useMemo(() => getPath(cwdId), [cwdId]);
 

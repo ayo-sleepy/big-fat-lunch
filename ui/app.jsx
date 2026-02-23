@@ -57,31 +57,14 @@ export default function App() {
   const rightTopH = pct(rows, theme.layout.rightTopHeightPercent);
   const rightBottomH = rows - rightTopH;
 
-  const [spaceChord, setSpaceChord] = useState(false);
-
   const setPane = useCallback((n) => setActivePane(clamp(n, 1, 3)), []);
 
-  useEffect(() => {
-    if (!spaceChord) return;
-    const t = setTimeout(() => setSpaceChord(false), 700);
-    return () => clearTimeout(t);
-  }, [spaceChord]);
-
   useInput((input, key) => {
-    if (key.escape) setSpaceChord(false);
-
-    if (!spaceChord) {
-      if (input === " ") {
-        setSpaceChord(true);
-        return;
-      }
+    if (key.meta && (input === "1" || input === "2" || input === "3")) {
+      setPane(Number(input));
       return;
     }
-
-    if (input === "1") setPane(1);
-    if (input === "2") setPane(2);
-    if (input === "3") setPane(3);
-    setSpaceChord(false);
+    return;
   });
 
   const focus = useMemo(

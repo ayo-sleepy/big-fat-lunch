@@ -28,4 +28,4 @@ A detailed FAT table view (cluster map). It shows cluster states (FREE/RES/BAD/E
 _Logs_
 A small, always-on, read-only event stream. It displays step-by-step actions produced by operations (allocation, linking, writing, freeing), so you can follow what happened without switching focus to it.
 
-**Focus switching:** Space+1 (File Manager), Space+2 (Commander), Space+3 (Clusters). Logs are always visible and do not receive focus.
+**Focus switching:** Alt+1 (File Manager), Alt+2 (Commander), Alt+3 (Clusters). Logs are always visible and do not receive focus.
