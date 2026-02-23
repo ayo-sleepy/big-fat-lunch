@@ -1,4 +1,8 @@
 {
+  "name": "big-fat-lunch",
+  "description": "A simple visualised FAT file system simulator",
+  "author": "Ivan Kurbakov <tayowrld@gmail.com>",
+  "license": "MIT",
   "dependencies": {
     "chalk": "^5.6.2",
     "ink": "^6.8.0",
