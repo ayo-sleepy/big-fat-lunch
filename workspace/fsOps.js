@@ -9,7 +9,8 @@ function now() {
 function splitPath(rawPath) {
   const raw = String(rawPath ?? "").trim();
   const isAbs = raw.startsWith("X:/");
-  const parts = raw.split("X:/").filter(Boolean);
+  const afterPrefix = isAbs ? raw.slice(3) : raw;
+  const parts = afterPrefix.split("/").filter(Boolean);
   return { isAbs, parts };
 }
 
@@ -62,11 +63,20 @@ export function resolveToEntryId(cwdId, path) {
   if (path === "X:/" || path === "") return "root";
 
   const { isAbs, parts } = splitPath(path);
-  const normalized = normalizeParts(parts);
-  const startId = isAbs ? "root" : cwdId;
-
-  let currentId = startId;
-  for (const part of normalized) {
+  
+  let currentId = isAbs ? "root" : cwdId;
+  
+  for (const part of parts) {
+    if (part === "" || part === ".") continue;
+    
+    if (part === "..") {
+      if (currentId !== "root") {
+        const cur = getEntryOrThrow(entries, currentId);
+        currentId = cur.parentId;
+      }
+      continue;
+    }
+    
     const cur = getEntryOrThrow(entries, currentId);
     if (!isDir(cur)) throw new Error("Not a directory");
 
@@ -78,29 +88,47 @@ export function resolveToEntryId(cwdId, path) {
   return currentId;
 }
 
+export function getParentId(cwdId) {
+  const { entries } = getDb();
+  const cur = getEntryOrThrow(entries, cwdId);
+  if (cur.id === "root") return "root";
+  return cur.parentId;
+}
+
 function resolveParentAndName(cwdId, path) {
   const { entries } = getDb();
   const { isAbs, parts } = splitPath(path);
-  const normalized = normalizeParts(parts);
-  if (normalized.length === 0) throw new Error("Invalid path");
+  
+  let parentId = isAbs ? "root" : cwdId;
+  let name = null;
 
-  const name = normalized[normalized.length - 1];
-  assertNameOk(name);
-
-  const parentParts = normalized.slice(0, -1);
-  const startId = isAbs ? "root" : cwdId;
-
-  let parentId = startId;
-  for (const part of parentParts) {
-    const cur = getEntryOrThrow(entries, parentId);
-    if (!isDir(cur)) throw new Error("Not a directory");
-
-    const child = findChild(entries, parentId, part);
-    if (!child) throw new Error("No such file or directory");
-    if (!isDir(child)) throw new Error("Not a directory");
-
-    parentId = child.id;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    
+    if (part === "" || part === ".") continue;
+    
+    if (part === "..") {
+      if (parentId !== "root") {
+        const cur = getEntryOrThrow(entries, parentId);
+        parentId = cur.parentId;
+      }
+      continue;
+    }
+    
+    if (i === parts.length - 1) {
+      name = part;
+    } else {
+      const cur = getEntryOrThrow(entries, parentId);
+      if (!isDir(cur)) throw new Error("Not a directory");
+      const child = findChild(entries, parentId, part);
+      if (!child) throw new Error("No such file or directory");
+      if (!isDir(child)) throw new Error("Not a directory");
+      parentId = child.id;
+    }
   }
+
+  if (!name) throw new Error("Invalid path");
+  assertNameOk(name);
 
   return { parentId, name };
 }
