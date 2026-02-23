@@ -8,7 +8,7 @@ import {
   mvPath,
   cpPath,
 } from "./fsOps.js";
-import { readEntryData } from "./fatOps.js";
+import { readEntryData, writeEntryData } from "./fatOps.js";
 import { getDb } from "../data/data.js";
 import { commanderBus } from "./commanderBus.js";
 
@@ -102,6 +102,14 @@ function execute(cwdId, cmd, args, flags) {
   if (cmd === "touch") {
     if (!args[0]) throw new Error("touch: missing operand");
     touch(cwdId, args[0]);
+    return { success: true };
+  }
+
+  if (cmd === "write") {
+    if (!args[0]) throw new Error("write: missing operand");
+    const text = args.slice(1).join(" ");
+    const id = resolveToEntryId(cwdId, args[0]);
+    writeEntryData(id, text);
     return { success: true };
   }
 
