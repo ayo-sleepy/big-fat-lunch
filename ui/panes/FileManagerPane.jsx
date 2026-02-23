@@ -2,14 +2,14 @@ import React, { useMemo, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { getDb } from "../../data/data.js";
 import { theme } from "../theme.js";
-import { resolveToEntryId, getPathOfEntryId } from "../../workspace/fsOps.js";
+import { getPath, runCommand, pushLine } from "../../workspace/commander.js";
 
 function sortEntries(a, b) {
   if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
   return a.name.localeCompare(b.name);
 }
 
-function getChildren(entries, parentId) {
+function getChildrenEntries(entries, parentId) {
   return entries.find({ parentId, deleted: false }).sort(sortEntries);
 }
 
@@ -29,10 +29,10 @@ export default function FileManagerPane({
 }) {
   const { entries } = getDb();
   const cwd = safeEntry(entries, cwdId) ?? safeEntry(entries, "root");
-  const cwdPath = getPathOfEntryId(cwd.id);
+  const cwdPath = getPath(cwd.id);
 
   const items = useMemo(() => {
-    const kids = getChildren(entries, cwd.id);
+    const kids = getChildrenEntries(entries, cwd.id);
     const up =
       cwd.id === "root"
         ? []
@@ -42,6 +42,35 @@ export default function FileManagerPane({
 
   const [cursor, setCursor] = useState(0);
   const max = Math.max(0, items.length - 1);
+
+  const navigateTo = (target) => {
+    if (target._virtual && target.name === "..") {
+      navigateBack();
+      return;
+    }
+    const cmd = `cd ${target.name}`;
+    pushLine(`${cwdPath} $ ${cmd}`);
+    runCommand(cwd.id, cmd);
+    onCwdChange(target.id);
+    setCursor(0);
+  };
+
+  const navigateBack = () => {
+    if (cwd.id === "root") return;
+    const cmd = `cd ..`;
+    pushLine(`${cwdPath} $ ${cmd}`);
+    runCommand(cwd.id, cmd);
+    onCwdChange(cwd.parentId);
+    setCursor(0);
+  };
+
+  const navigateToRoot = () => {
+    const cmd = `cd X:/`;
+    pushLine(`${cwdPath} $ ${cmd}`);
+    runCommand(cwd.id, cmd);
+    onCwdChange("root");
+    setCursor(0);
+  };
 
   useInput(
     (input, key) => {
@@ -53,25 +82,26 @@ export default function FileManagerPane({
       if (key.return) {
         const it = items[cursor];
         if (!it) return;
-        const targetId = it.id;
-        const target = safeEntry(entries, targetId);
+
+        if (it._virtual && it.name === "..") {
+          navigateBack();
+          return;
+        }
+
+        const target = safeEntry(entries, it.id);
         if (target?.type === "dir") {
-          onCwdChange(target.id);
-          setCursor(0);
+          navigateTo(target);
           return;
         }
         onSelectEntry(target?.id ?? null);
       }
 
       if (key.backspace || key.delete) {
-        if (cwd.id === "root") return;
-        onCwdChange(cwd.parentId);
-        setCursor(0);
+        navigateBack();
       }
 
       if (input === "X:/") {
-        onCwdChange("root");
-        setCursor(0);
+        navigateToRoot();
       }
     },
     { isActive: focused },
@@ -107,7 +137,7 @@ export default function FileManagerPane({
               <Text>type: {selected.type}</Text>
               <Text>size: {selected.size ?? 0}</Text>
               <Text>firstCluster: {selected.firstCluster ?? 0}</Text>
-              <Text>path: {getPathOfEntryId(selected.id)}</Text>
+              <Text>path: {getPath(selected.id)}</Text>
             </>
           ) : (
             <Text dimColor>select a file to inspect</Text>
