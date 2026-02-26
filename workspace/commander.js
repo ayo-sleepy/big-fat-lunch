@@ -41,99 +41,144 @@ function tokenize(line) {
 
 function execute(cwdId, cmd, args, flags) {
   if (cmd === "help") {
-    push("write <path> <text...>");
-    push("cat <path>");
-    push("mkdir <path>");
-    push("touch <path>");
-    push("rm [-r] <path>");
-    push("mv <src> <dst>");
-    push("cp [-r] <src> <dst>");
-    push("ls [path]");
-    push("cd [path]");
-    push("pwd");
-    push("clear");
-    return { success: true };
+    return help();
   }
 
   if (cmd === "clear") {
-    return { success: true, clear: true };
+    return clear();
   }
 
   if (cmd === "pwd") {
-    const path = getPathOfEntryId(cwdId);
-    push(path);
-    return { success: true };
+    return pwd(cwdId);
   }
 
   if (cmd === "ls") {
-    const target = args[0] ?? ".";
-    const id = resolveToEntryId(cwdId, target);
-    const rows = listDir(id);
-    for (const r of rows) push(r);
-    return { success: true };
+    return ls(cwdId, args[0]);
   }
 
   if (cmd === "cd") {
-    const target = args[0] ?? "X:/";
-    const id = resolveToEntryId(cwdId, target);
-    const path = getPathOfEntryId(id);
-    return { success: true, newCwdId: id, newPath: path };
+    return changeDirectory(cwdId, args[0] ?? "X:/");
   }
 
   if (cmd === "cat") {
-    if (!args[0]) throw new Error("cat: missing operand");
-    const { entries } = getDb();
-    const id = resolveToEntryId(cwdId, args[0]);
-    const entry = entries.findOne({ id });
-    if (!entry || entry.deleted) throw new Error("cat: not found");
-    if (entry.type !== "file") throw new Error("cat: not a file");
-    const text = readEntryData(entry.id);
-    const lines = String(text).split("\n");
-    for (const l of lines) push(l);
-    return { success: true };
+    return cat(cwdId, args[0]);
   }
 
   if (cmd === "mkdir") {
-    if (!args[0]) throw new Error("mkdir: missing operand");
-    mkdirp(cwdId, args[0]);
-    return { success: true };
+    return mkdir(cwdId, args[0]);
   }
 
   if (cmd === "touch") {
-    if (!args[0]) throw new Error("touch: missing operand");
-    touch(cwdId, args[0]);
-    return { success: true };
+    return touchCmd(cwdId, args[0]);
   }
 
   if (cmd === "write") {
-    if (!args[0]) throw new Error("write: missing operand");
-    const text = args.slice(1).join(" ");
-    const id = resolveToEntryId(cwdId, args[0]);
-    writeEntryData(id, text);
-    return { success: true };
+    return write(cwdId, args[0], args.slice(1).join(" "));
   }
 
   if (cmd === "rm") {
-    if (!args[0]) throw new Error("rm: missing operand");
-    const recursive = flags.has("-r") || flags.has("-rf") || flags.has("-fr");
-    rmPath(cwdId, args[0], { recursive });
-    return { success: true };
+    return rm(cwdId, args[0], flags);
   }
 
   if (cmd === "mv") {
-    if (!args[0] || !args[1]) throw new Error("mv: missing operand");
-    mvPath(cwdId, args[0], args[1]);
-    return { success: true };
+    return mv(cwdId, args[0], args[1]);
   }
 
   if (cmd === "cp") {
-    if (!args[0] || !args[1]) throw new Error("cp: missing operand");
-    const recursive = flags.has("-r") || flags.has("-R");
-    cpPath(cwdId, args[0], args[1], { recursive });
-    return { success: true };
+    return cp(cwdId, args[0], args[1], flags);
   }
 
   throw new Error(`unknown command: ${cmd}`);
+}
+
+export function help() {
+  push("write <path> <text...>");
+  push("cat <path>");
+  push("mkdir <path>");
+  push("touch <path>");
+  push("rm [-r] <path>");
+  push("mv <src> <dst>");
+  push("cp [-r] <src> <dst>");
+  push("ls [path]");
+  push("cd [path]");
+  push("pwd");
+  push("clear");
+  return { success: true };
+}
+
+export function clear() {
+  return { success: true, clear: true };
+}
+
+export function pwd(cwdId) {
+  const path = getPathOfEntryId(cwdId);
+  push(path);
+  return { success: true };
+}
+
+export function ls(cwdId, target = ".") {
+  const id = resolveToEntryId(cwdId, target);
+  const rows = listDir(id);
+  for (const r of rows) push(r);
+  return { success: true };
+}
+
+export function changeDirectory(cwdId, target = "X:/") {
+  const id = resolveToEntryId(cwdId, target);
+  const path = getPathOfEntryId(id);
+  return { success: true, newCwdId: id, newPath: path };
+}
+
+export function cat(cwdId, path) {
+  if (!path) throw new Error("cat: missing operand");
+  const { entries } = getDb();
+  const id = resolveToEntryId(cwdId, path);
+  const entry = entries.findOne({ id });
+  if (!entry || entry.deleted) throw new Error("cat: not found");
+  if (entry.type !== "file") throw new Error("cat: not a file");
+  const text = readEntryData(entry.id);
+  const lines = String(text).split("\n");
+  for (const l of lines) push(l);
+  return { success: true };
+}
+
+export function mkdir(cwdId, path) {
+  if (!path) throw new Error("mkdir: missing operand");
+  mkdirp(cwdId, path);
+  return { success: true };
+}
+
+export function touchCmd(cwdId, path) {
+  if (!path) throw new Error("touch: missing operand");
+  touch(cwdId, path);
+  return { success: true };
+}
+
+export function write(cwdId, path, text) {
+  if (!path) throw new Error("write: missing operand");
+  const id = resolveToEntryId(cwdId, path);
+  writeEntryData(id, text);
+  return { success: true };
+}
+
+export function rm(cwdId, path, flags) {
+  if (!path) throw new Error("rm: missing operand");
+  const recursive = flags.has("-r") || flags.has("-rf") || flags.has("-fr");
+  rmPath(cwdId, path, { recursive });
+  return { success: true };
+}
+
+export function mv(cwdId, src, dst) {
+  if (!src || !dst) throw new Error("mv: missing operand");
+  mvPath(cwdId, src, dst);
+  return { success: true };
+}
+
+export function cp(cwdId, src, dst, flags) {
+  if (!src || !dst) throw new Error("cp: missing operand");
+  const recursive = flags.has("-r") || flags.has("-R");
+  cpPath(cwdId, src, dst, { recursive });
+  return { success: true };
 }
 
 export function getPath(cwdId) {

@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
+import chalk from "chalk";
 import { getDb } from "../../data/data.js";
 import { theme } from "../theme.js";
-import { getPath, runCommand, pushLine } from "../../workspace/commander.js";
+import { getPath, changeDirectory } from "../../workspace/commander.js";
+import Modal, { ModalStyle, ModalType } from "../components/Modal.jsx";
 
 function sortEntries(a, b) {
   if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
@@ -43,38 +45,50 @@ export default function FileManagerPane({
   const [cursor, setCursor] = useState(0);
   const max = Math.max(0, items.length - 1);
 
+  const [modalOpen, setModalOpen] = useState(true);
+
+  useEffect(() => {
+    if (focused) {
+      setModalOpen(true);
+    }
+  }, [focused]);
+
+  const handleModalAccept = () => {
+    setModalOpen(false);
+  };
+
+  const handleModalCancel = () => {
+    setModalOpen(false);
+  };
+
   const navigateTo = (target) => {
     if (target._virtual && target.name === "..") {
       navigateBack();
       return;
     }
-    const cmd = `cd ${target.name}`;
-    pushLine(`${cwdPath} $ ${cmd}`);
-    runCommand(cwd.id, cmd);
-    onCwdChange(target.id);
+    const result = changeDirectory(cwd.id, target.name);
+    if (result?.newCwdId) onCwdChange(result.newCwdId);
     setCursor(0);
   };
 
   const navigateBack = () => {
     if (cwd.id === "root") return;
-    const cmd = `cd ..`;
-    pushLine(`${cwdPath} $ ${cmd}`);
-    runCommand(cwd.id, cmd);
-    onCwdChange(cwd.parentId);
+    const result = changeDirectory(cwd.id, "..");
+    if (result?.newCwdId) onCwdChange(result.newCwdId);
     setCursor(0);
   };
 
   const navigateToRoot = () => {
-    const cmd = `cd X:/`;
-    pushLine(`${cwdPath} $ ${cmd}`);
-    runCommand(cwd.id, cmd);
-    onCwdChange("root");
+    const result = changeDirectory(cwd.id, "X:/");
+    if (result?.newCwdId) onCwdChange(result.newCwdId);
     setCursor(0);
   };
 
   useInput(
     (input, key) => {
       if (!focused) return;
+
+      if (modalOpen) return;
 
       if (key.upArrow) setCursor((c) => Math.max(0, c - 1));
       if (key.downArrow) setCursor((c) => Math.min(max, c + 1));
@@ -112,14 +126,14 @@ export default function FileManagerPane({
   const selected = selectedEntryId ? safeEntry(entries, selectedEntryId) : null;
 
   return (
-    <Box flexDirection="column" width="100%">
+    <Box flexDirection="column" style="background: #000000" width="100%">
       <Text>{cwdPath}</Text>
 
       <Box flexDirection="row" width="100%" marginTop={1}>
         <Box flexDirection="column" width="60%">
           {view.map((it, i) => {
             const isCursor = i === cursor;
-            const label = it.type === "dir" ? "dir " : "file";
+            const label = it.type === "dir" ? chalk.blue("dir") : chalk.white("file");
             const marker = isCursor ? ">" : " ";
             return (
               <Text key={it.id} inverse={isCursor}>
@@ -144,6 +158,15 @@ export default function FileManagerPane({
           )}
         </Box>
       </Box>
+
+      <Modal
+        isOpen={modalOpen && focused}
+        title="Welcome!"
+        subtitle="Have a good time now!"
+        style={ModalStyle.IMPORTANT}
+        onAccept={handleModalAccept}
+        onCancel={handleModalCancel}
+      />
     </Box>
   );
 }
