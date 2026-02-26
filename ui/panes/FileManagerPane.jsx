@@ -3,8 +3,9 @@ import { Box, Text, useInput } from "ink";
 import chalk from "chalk";
 import { getDb } from "../../data/data.js";
 import { theme } from "../theme.js";
-import { getPath, changeDirectory } from "../../workspace/commander.js";
+import { getPath, changeDirectory, mkdir, touchCmd, rm, cat, write } from "../../workspace/commander.js";
 import Modal, { ModalStyle, ModalType } from "../components/Modal.jsx";
+import QuickWriteModal from "../components/QuickWriteModal.jsx";
 
 function sortEntries(a, b) {
   if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
@@ -45,20 +46,81 @@ export default function FileManagerPane({
   const [cursor, setCursor] = useState(0);
   const max = Math.max(0, items.length - 1);
 
-  const [modalOpen, setModalOpen] = useState(true);
+  const [modalMode, setModalMode] = useState(null);
+  const [modalType, setModalType] = useState(ModalType.MESSAGE);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [quickWriteTarget, setQuickWriteTarget] = useState(null);
+  const [quickWriteContent, setQuickWriteContent] = useState("");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  useEffect(() => {
-    if (focused) {
-      setModalOpen(true);
-    }
-  }, [focused]);
-
-  const handleModalAccept = () => {
-    setModalOpen(false);
+  const openCreateModal = () => {
+    setModalType(ModalType.PROMPT);
+    setModalMode("create");
   };
 
-  const handleModalCancel = () => {
-    setModalOpen(false);
+  const openDeleteModal = (target) => {
+    if (!target || target._virtual) return;
+    setModalType(ModalType.MESSAGE);
+    setDeleteTarget(target);
+    setModalMode("delete");
+  };
+
+  const openQuickWriteModal = () => {
+    const it = items[cursor];
+    if (!it || it._virtual) return;
+    const entry = safeEntry(entries, it.id);
+    if (!entry || entry.type !== "file") return;
+    
+    let content = "";
+    try {
+      content = cat(cwd.id, entry.name)?.lines?.join("\n") || "";
+    } catch (e) {
+      content = "";
+    }
+    
+    setQuickWriteTarget(entry);
+    setQuickWriteContent(content);
+    setModalMode("quickwrite");
+  };
+
+  const closeModal = () => {
+    setModalMode(null);
+    setDeleteTarget(null);
+    setQuickWriteTarget(null);
+    setQuickWriteContent("");
+    setShowCancelConfirm(false);
+  };
+
+  const handleCreateSubmit = (name) => {
+    if (!name) {
+      closeModal();
+      return;
+    }
+    if (name.endsWith("/")) {
+      mkdir(cwd.id, name.slice(0, -1));
+    } else {
+      touchCmd(cwd.id, name);
+    }
+    closeModal();
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteTarget) {
+      rm(cwd.id, deleteTarget.name, new Set(["-r"]));
+    }
+    setDeleteTarget(null);
+    closeModal();
+  };
+
+  const handleQuickWriteSave = (content) => {
+    if (quickWriteTarget) {
+      write(cwd.id, quickWriteTarget.name, content);
+    }
+    closeModal();
+  };
+
+  const handleQuickWriteCancel = () => {
+    closeModal();
   };
 
   const navigateTo = (target) => {
@@ -88,7 +150,7 @@ export default function FileManagerPane({
     (input, key) => {
       if (!focused) return;
 
-      if (modalOpen) return;
+      if (modalMode) return;
 
       if (key.upArrow) setCursor((c) => Math.max(0, c - 1));
       if (key.downArrow) setCursor((c) => Math.min(max, c + 1));
@@ -116,6 +178,20 @@ export default function FileManagerPane({
 
       if (input === "X:/") {
         navigateToRoot();
+      }
+
+      if (input === "a" || input === "A") {
+        openCreateModal();
+      }
+
+      if ((input === "d" || input === "D") && items.length > 0) {
+        const it = items[cursor];
+        if (!it || it._virtual) return;
+        openDeleteModal(it);
+      }
+
+      if (input === "w" || input === "W") {
+        openQuickWriteModal();
       }
     },
     { isActive: focused },
@@ -159,14 +235,39 @@ export default function FileManagerPane({
         </Box>
       </Box>
 
-      <Modal
-        isOpen={modalOpen && focused}
-        title="Welcome!"
-        subtitle="Have a good time now!"
-        style={ModalStyle.IMPORTANT}
-        onAccept={handleModalAccept}
-        onCancel={handleModalCancel}
-      />
+      {modalMode === "create" && (
+        <Modal
+          isOpen={focused}
+          title="Create new"
+          subtitle="Enter file name (add / for directory)"
+          style={ModalStyle.NORMAL}
+          type={ModalType.PROMPT}
+          placeholder="filename or dirname/"
+          onAccept={handleCreateSubmit}
+          onCancel={closeModal}
+        />
+      )}
+
+      {modalMode === "delete" && (
+        <Modal
+          isOpen={focused}
+          title="Delete?"
+          subtitle={`Delete "${deleteTarget?.name}"?`}
+          style={ModalStyle.ERROR}
+          onAccept={handleDeleteConfirm}
+          onCancel={closeModal}
+        />
+      )}
+
+      {modalMode === "quickwrite" && (
+        <QuickWriteModal
+          isOpen={focused}
+          targetName={quickWriteTarget?.name}
+          initialContent={quickWriteContent}
+          onSave={handleQuickWriteSave}
+          onCancel={handleQuickWriteCancel}
+        />
+      )}
     </Box>
   );
 }
