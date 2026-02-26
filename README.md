@@ -1,4 +1,4 @@
-# big-fat-lunch v0.1.4 - FAT simulator
+# big-fat-lunch v0.1.6 - FAT simulator
 
 ## Made by Ivan (ayo-sleepy) Kurbakov for RSREU, as a side project.
 
@@ -8,9 +8,11 @@
 
 #### Stack: NodeJS, JavaScript, LokiJs, Chalk, Ink, Tsx, Nodemon, React.
 
-<img src="./assets/big-fat-lunch.png">
+<img src="./assets/big-fat-lunch.png" style="width:48%">
 
-_This readme was written for version 0.1.4 of big-fat-lunch, the project is currently in work and it's not recommended to use it as stable version due to lack of update capability in future. Currently there is NO any support of older versions. big-fat-lunch was not tested enough and is totally enthusiastic._
+<img src="./assets/big-fat-lunch-write.png" style="width:48%">
+
+_This readme was written for version 0.1.6 of big-fat-lunch, the project is currently in work and it's not recommended to use it as stable version due to lack of update capability in future. Currently there is NO any support of older versions. big-fat-lunch was not tested enough and is totally enthusiastic._
 
 FAT (File Allocation Table) is a classical architecture of File System. Used by default in old operating system, for example: DOS, windows 9x, etc. This implementation of FAT simulation is NOT a total recreation of File System, but it aims to implement the processes of its usage.
 
