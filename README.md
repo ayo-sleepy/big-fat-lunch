@@ -8,9 +8,9 @@
 
 #### Stack: NodeJS, JavaScript, LokiJs, Chalk, Ink, Tsx, Nodemon, React.
 
-<img src="./assets/big-fat-lunch.png" style="width:48%">
+<img src="./assets/big-fat-lunch.png">
 
-<img src="./assets/big-fat-lunch-write.png" style="width:48%">
+<img src="./assets/big-fat-lunch-write.png">
 
 _This readme was written for version 0.1.6 of big-fat-lunch, the project is currently in work and it's not recommended to use it as stable version due to lack of update capability in future. Currently there is NO any support of older versions. big-fat-lunch was not tested enough and is totally enthusiastic._
 
